@@ -2,6 +2,7 @@ env/
 # data/scienceqa/images/
 
 checkpoints/*.pt
+results/*
 
 *.zip
 *.idea
