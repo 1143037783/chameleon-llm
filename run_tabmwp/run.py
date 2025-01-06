@@ -3,6 +3,7 @@ import sys
 import json
 import argparse
 import random
+import time
 from tqdm import tqdm
 
 # add the parent directory to the path
@@ -71,10 +72,10 @@ def parse_args():
 
 
 if __name__ == "__main__":
-
     args = parse_args()
     random.seed(args.seed)
 
+    start_time = time.time()
     # Build the solver
     solver = solver(args)
     print(f"# Number of test examples: {len(solver.examples)}\n")
@@ -96,8 +97,8 @@ if __name__ == "__main__":
         correct = result['correct']
         wrong = result['wrong']
         print(f"Count: {count}, Correct: {correct}, Wrong: {wrong}")
+    print(f"len:{len(solver.pids)}")
     pids = solver.pids[count:] # only use the remaining problems
-
     for pid in tqdm(pids):
         solver.cache = {"pid": pid} # clear the cache
 
@@ -124,14 +125,13 @@ if __name__ == "__main__":
         # [2] Execute the modules 
         if args.debug or count < 10:
             print(f"# [Modules]\n{modules}\n")
-            
+
         for module in modules:
             input, output = eval(module)() # eval the module and update the cache
             if args.debug or count < 10:
                 print(f"======== [Module]: {module} ========\n")
                 print(f"# [Input]\n{input}\n")
                 print(f"# [Output]\n{output}\n")
-
         # [3] Evaluate the results
         # normalize the number in the text
         answer = solver.cache["example"]["answer"]
@@ -178,8 +178,7 @@ if __name__ == "__main__":
             except Exception as e:
                 print(e)
                 print(solver.cache)
-
         # save the result
-        result = {'acc': acc, 'correct': correct, 'wrong':wrong, 'count': count, 'args': vars(args)}
+        result = {'acc': acc, 'correct': correct, 'wrong':wrong, 'count': count, 'time(s)': time.time()-start_time, 'args': vars(args)}
         with open(result_file, 'w') as f:
             json.dump(result, f, indent=2, separators=(',', ': '))

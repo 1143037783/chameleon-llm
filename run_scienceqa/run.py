@@ -3,6 +3,7 @@ import sys
 import json
 import argparse
 import random
+import time
 from tqdm import tqdm
 
 # add the parent directory to the path
@@ -65,6 +66,7 @@ if __name__ == "__main__":
     args = parse_args()
     random.seed(args.seed)
 
+    start_time = time.time()
     # Build the solver
     solver = solver(args)
     print(f"# Number of test examples: {len(solver.examples)}\n")
@@ -163,6 +165,6 @@ if __name__ == "__main__":
                 print(solver.cache)
 
         # save the result
-        result = {'acc': acc, 'correct': correct, 'wrong':wrong, 'count': count, 'args': vars(args)}
+        result = {'acc': acc, 'correct': correct, 'wrong':wrong, 'count': count, 'time(s)': time.time()-start_time, 'args': vars(args)}
         with open(result_file, 'w') as f:
             json.dump(result, f, indent=2, separators=(',', ': '))
