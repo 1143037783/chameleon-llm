@@ -8,7 +8,7 @@ import openai
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utilities import *
-from demos import prompt_policy, prompt_kr, prompt_sg, prompt_qg
+from demos import prompt_policy, prompt_kr, prompt_sg, prompt_qg, prompt_pg, prompt_cl,prompt_tv,prompt_rl
 
 # OpenAI
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -340,6 +340,229 @@ class solver:
         full_prompt = demo_prompt + "\n\n" + test_prompt
         return test_prompt, full_prompt
 
+    def row_lookup(self):
+        # get the module input
+        question = self.cache["example"]["question"]
+        table = self.cache["example"]["table"]
+        context = self.cache["example"]["context"] if "context" in self.cache["example"] else ""
+        row_num = self.cache["example"]["row_num"]
+        column_num = self.cache["example"]["column_num"]
+        cell_num = row_num * column_num
+
+        # if row_num <=3 or cell_num <= 12:
+        if row_num <= self.rl_row_threshold or cell_num <= self.rl_cell_threshold:
+            test_prompt = None
+            simple_table = table
+
+        else:
+            demo_prompt = prompt_rl.prompt.strip()
+            # test_prompt = f"Question: {question}\n\nTable:\n\n{table}\n\nSimplified Table:\n"
+            if context != "":
+                test_prompt = f"Question: {question}\n\nTable:\n{table}\n\n{context}\n\nSimplified Table:\n"
+            else:
+                test_prompt = f"Question: {question}\n\nTable:\n{table}\n\nSimplified Table:\n"
+
+            full_prompt = demo_prompt + "\n\n" + test_prompt
+            messages = [
+                {"role": "user", "content": full_prompt},
+            ]
+            # execute the module
+            if self.rl_cand == 1:
+                simple_table = get_chat_response(messages, self.api_key, self.rl_engine, self.rl_temperature,
+                                                 self.rl_max_tokens)
+            else:
+                simple_tables = get_chat_response(messages, self.api_key, self.rl_engine, self.rl_temperature,
+                                                  self.rl_max_tokens, self.rl_cand)
+                simple_table = max(simple_tables, key=simple_tables.count)
+
+        # update the cache
+        self.cache["example"]["table"] = simple_table  # update the table!!
+        self.cache["row_lookup:input"] = test_prompt
+        self.cache["row_lookup:output"] = simple_table
+        return test_prompt, simple_table
+
+    def column_lookup(self):
+        # get the module input
+        question = self.cache["example"]["question"]
+        table = self.cache["example"]["table"]
+        context = self.cache["example"]["context"] if "context" in self.cache["example"] else ""
+        row_num = self.cache["example"]["row_num"]
+        column_num = self.cache["example"]["column_num"]
+        cell_num = row_num * column_num
+
+        # if column_num <= 2 or cell_num <= 12:
+        if column_num <= self.cl_col_threshold or cell_num <= self.cl_cell_threshold:
+            test_prompt = None
+            simple_table = table
+
+        else:
+            demo_prompt = prompt_cl.prompt.strip()
+            # test_prompt = f"Question: {question}\n\nTable:\n\n{table}\n\nSimplified Table:\n"
+            if context != "":
+                test_prompt = f"Question: {question}\n\nTable:\n\n{table}\n\n{context}\n\nSimplified Table:\n"
+            else:
+                test_prompt = f"Question: {question}\n\nTable:\n\n{table}\n\nSimplified Table:\n"
+            full_prompt = demo_prompt + "\n\n" + test_prompt
+            messages = [
+                {"role": "user", "content": full_prompt},
+            ]
+            # execute the module
+            simple_table = get_chat_response(messages, self.api_key, self.cl_engine, self.cl_temperature,
+                                             self.cl_max_tokens)
+
+        # update the cache
+        self.cache["example"]["table"] = simple_table  # update the table!!
+        self.cache["column_lookup:input"] = test_prompt
+        self.cache["column_lookup:output"] = simple_table
+        return test_prompt, simple_table
+
+    def table_verbalizer(self):
+        # get the module input
+        question = self.cache["example"]["question"]
+        table = self.cache["example"]["table"]
+        context = self.cache["example"]["context"] if "context" in self.cache["example"] else ""
+
+        demo_prompt = prompt_tv.prompt.strip()
+        # test_prompt = f"Question: {question}\n\nTable:\n\n{table}\n\nTable description:\n"
+        if context != "":
+            test_prompt = f"Question: {question}\n\nTable:\n\n{table}\n\n{context}\n\nTable description:\n"
+        else:
+            test_prompt = f"Question: {question}\n\nTable:\n\n{table}\n\nTable description:\n"
+        full_prompt = demo_prompt + "\n\n" + test_prompt
+        messages = [
+            {"role": "user", "content": full_prompt},
+        ]
+
+        # execute the module
+        verbalization = get_chat_response(messages, self.api_key, self.tv_engine, self.tv_temperature,
+                                          self.tv_max_tokens)
+        context += f"\n\nTable description: {verbalization}".strip()
+
+        # update the cache
+        self.cache["example"]["context"] = context
+        self.cache["table_verbalizer:input"] = test_prompt
+        self.cache["table_verbalizer:output"] = verbalization
+        return test_prompt, verbalization
+
+    def build_prompt_for_pg(self):
+        question = self.cache["example"]["question"]
+        unit = self.cache["example"]["unit"]
+        choices = self.cache["example"]["choices"]
+        table = self.cache["example"]["table"]
+        table_title = self.cache["example"]["table_title"]
+        context = self.cache["example"]["context"] if "context" in self.cache["example"] else ""
+
+        if choices:
+            demo_prompt = prompt_pg.prompt_choice.strip()
+        else:
+            demo_prompt = prompt_pg.prompt_free.strip()
+
+        if table_title:
+            instruction = f"Read the following table regarding {table_title} and then write Python code to answer a question:"
+        else:
+            instruction = "Read the following table and then write Python code to answer a question:"
+
+        if unit:
+            question += f" (Unit: {unit})"
+        if choices:
+            question += f" Please select from the following options: {choices}."
+
+        if choices:
+            solution = "# Python Code, return 'ans'. Make sure that 'ans' is a string selected from the options in the question"
+        else:
+            solution = "# Python Code, return 'ans'. Make sure that 'ans' is a number"
+
+        if context != "":
+            test_prompt = f"{instruction}\n\n{table}\n\n{context}\n\n{question}\n\n{solution}"
+        else:
+            test_prompt = f"{instruction}\n\n{table}\n\n{question}\n\n{solution}"
+
+        full_prompt = demo_prompt + "\n\n" + test_prompt
+        return test_prompt, full_prompt
+
+    def program_generator(self):
+        # get the module input
+        test_prompt, full_prompt = self.build_prompt_for_pg()
+        messages = [
+            {"role": "user", "content": full_prompt},
+        ]
+
+        # excute the module
+        program = get_chat_response(messages, self.api_key, self.pg_engine, self.pg_temperature, self.pg_max_tokens)
+
+        # update the cache
+        self.cache["program"] = program
+        self.cache["program_generator:input"] = test_prompt
+        self.cache["program_generator:output"] = program
+        return test_prompt, program
+
+    def _verify_program(self, program):
+        # check if the program is valid
+        if not isinstance(program, str):
+            return False
+        if isinstance(program, str):
+            if "ans =" not in program:
+                return False
+        _output = safe_execute(program)
+        if _output in (None, "", [], {}):
+            return False
+        return True
+
+    def program_verifier(self):
+        if "program" in self.cache:
+            program = self.cache["program"]
+        else:
+            return None, False
+
+        # excute the module
+        success = self._verify_program(program)
+
+        # update the cache
+        self.cache["program_verifier:output"] = success
+        return program, success
+
+    def program_generator_and_verifier(self):
+        # get the module input
+        patience = self.pv_patience
+        test_prompt, full_prompt = self.build_prompt_for_pg()
+        messages = [
+            {"role": "user", "content": full_prompt},
+        ]
+
+        # excute the module
+        program = None
+        success = False
+        count = 0
+        while count < patience and not success:
+            if self.pg_temperature < 0.1 and count > 0:
+                _temperature = min(self.pg_temperature + 0.1, 1.0)
+            else:
+                _temperature = self.pg_temperature
+            program = get_chat_response(messages, self.api_key, self.pg_engine, _temperature, self.pg_max_tokens)
+            success = self._verify_program(program)
+            count += 1
+            # if not success:
+            #     print(program)
+
+        # update the cache
+        self.cache["program"] = program
+        self.cache["program_generator_and_verifier:input"] = test_prompt
+        self.cache["program_generator_and_verifier:output"] = program
+        return test_prompt, program
+
+    def program_executor(self):
+        if "program" in self.cache:
+            program = self.cache["program"]
+        else:
+            return None, False
+
+        # excute the module
+        ans = safe_execute(program)
+
+        # update the cache
+        self.cache["program_executor:output"] = ans
+        return program, ans
+
     def solution_generator(self):
         # get the module input
         if self.model == "chameleon":
@@ -401,4 +624,3 @@ class solver:
         self.cache["answer_generator:input"] = output
         self.cache["answer_generator:output"] = prediction
         return output, prediction
-
