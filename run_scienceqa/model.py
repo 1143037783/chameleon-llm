@@ -10,8 +10,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utilities import *
 from demos import prompt_policy, prompt_kr, prompt_sg, prompt_qg
 
-# OpenAI
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# deepseek
+openai.api_key = os.getenv("DEEPSEEK_API_KEY")
 print(openai.api_key)
 
 # OpenAI

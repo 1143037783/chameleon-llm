@@ -12,7 +12,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utilities import *
 from model import solver
 
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_root', type=str, default='../data/scienceqa')
@@ -22,11 +21,11 @@ def parse_args():
     parser.add_argument('--task_name', type=str, default='scienceqa')
     parser.add_argument('--test_split', type=str, default='minitest', 
                         choices=['train', 'val', 'test', 'minitrain', 'minival', 'minitest'])
-    parser.add_argument('--test_number', type=int, default=100)
+    parser.add_argument('--test_number', type=int, default=10)
     parser.add_argument('--seed', type=int, default=0)
     # module prediction
     parser.add_argument('--modules', nargs='+', default=None, help='default modules')
-    parser.add_argument('--policy_engine', type=str, default="gpt-3.5-turbo", help='engine for module prediction')
+    parser.add_argument('--policy_engine', type=str, default="deepseek-chat", help='engine for module prediction')
     parser.add_argument('--policy_temperature', type=float, default=0., help='temperature for module prediction')
     parser.add_argument('--policy_max_tokens', type=int, default=128, help='max tokens for module prediction')
     # knowledge retrieval
