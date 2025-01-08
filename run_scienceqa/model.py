@@ -11,7 +11,8 @@ from utilities import *
 from demos import prompt_policy, prompt_kr, prompt_sg, prompt_qg
 
 # deepseek
-openai.api_key = os.getenv("DEEPSEEK_API_KEY")
+# openai.api_key = os.getenv("DEEPSEEK_API_KEY")
+openai.api_key = os.getenv("OPENAI_API_KEY")
 print(openai.api_key)
 
 # OpenAI
