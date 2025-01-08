@@ -1,6 +1,6 @@
 # 配置
 
-> 敏感数据直接配置在pycharm的variable enviroment
+> 敏感数据直接配置在pycharm的variable enviroment中
 
 1. chatgpt：在model.py中设置api_key
 
@@ -87,4 +87,4 @@
    * 配置：文档及参数等
    * 功能：功能模块
    * 修复：修复bug
-   * temp：为了切换分支使用的临时提交
+8. 关于chatgpt中的model和engine：旧版使用engine，新版使用Model，感觉混用的问题不大
