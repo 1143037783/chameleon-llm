@@ -29,11 +29,11 @@ def parse_args():
     parser.add_argument('--policy_temperature', type=float, default=0., help='temperature for module prediction')
     parser.add_argument('--policy_max_tokens', type=int, default=128, help='max tokens for module prediction')
     # knowledge retrieval
-    parser.add_argument('--kr_engine', type=str, default="gpt-3.5-turbo", help='engine for knowledge retrieval')
+    parser.add_argument('--kr_engine', type=str, default="deepseek-chat", help='engine for knowledge retrieval')
     parser.add_argument('--kr_temperature', type=float, default=0., help='temperature for knowledge retrieval')
     parser.add_argument('--kr_max_tokens', type=int, default=512, help='max tokens for knowledge retrieval')
     # query generator
-    parser.add_argument('--qg_engine', type=str, default="gpt-3.5-turbo", help='engine for query generator')
+    parser.add_argument('--qg_engine', type=str, default="deepseek-chat", help='engine for query generator')
     parser.add_argument('--qg_temperature', type=float, default=0., help='temperature for query generator')
     parser.add_argument('--qg_max_tokens', type=int, default=64, help='max tokens for query generator')
     parser.add_argument('--qg_patience', type=int, default=5, help='patience for query generator')
@@ -47,7 +47,7 @@ def parse_args():
     # text detector
     parser.add_argument('--ocr_file', type=str, default='../data/scienceqa/ocrs.json')
     # solution_generator
-    parser.add_argument('--sg_engine', type=str, default="gpt-3.5-turbo", help='engine for solution generator')
+    parser.add_argument('--sg_engine', type=str, default="deepseek-chat", help='engine for solution generator')
     parser.add_argument('--sg_temperature', type=float, default=0., help='temperature for solution generator')
     parser.add_argument('--sg_max_tokens', type=int, default=512, help='max tokens for solution generator')
     parser.add_argument('--sg_patience', type=int, default=5, help='patience for solution generator')

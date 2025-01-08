@@ -4,13 +4,18 @@ from openai import OpenAI
 import func_timeout
 import requests
 import numpy as np
-from collections import defaultdict
+import os
 
+from collections import defaultdict
 from typing import Union, Any
 from math import isclose
 
-model_to_baseurl = defaultdict(lambda: "https://api.openai.com/v1")
-model_to_baseurl["deepseek-chat"]="https://api.deepseek.com"
+# LLM api_key
+openai_api_key = os.getenv("OPENAI_API_KEY")
+deepseek3_api_key = os.getenv("DEEPSEEK_API_KEY")
+
+model_dic = defaultdict(lambda: {"api_key":openai_api_key,"baseurl":"https://api.openai.com/v1"})
+model_dic["deepseek-chat"]={"api_key":deepseek3_api_key,"baseurl":"https://api.deepseek.com"}
 
 def safe_execute(code_string: str, keys=None):
     def execute(x):
@@ -30,11 +35,11 @@ def safe_execute(code_string: str, keys=None):
     return ans
 
 
-def get_codex_response(prompt, api_key, engine="code-davinci-002", temperature=0, max_tokens=256, top_p=1, n=1, patience=10, sleep_time=0):
+def get_codex_response(prompt, engine="code-davinci-002", temperature=0, max_tokens=256, top_p=1, n=1, patience=10, sleep_time=0):
     while patience > 0:
         patience -= 1
         try:
-            client = OpenAI(api_key=api_key, base_url=model_to_baseurl[engine])
+            client = OpenAI(api_key=model_dic[engine]["api_key"], base_url=model_dic[engine]["baseurl"])
             response = client.chat.completions.create(engine=engine,
                                                 prompt=prompt,
                                                 temperature=temperature,
@@ -54,11 +59,11 @@ def get_codex_response(prompt, api_key, engine="code-davinci-002", temperature=0
     return ""
 
 
-def get_gpt3_response(prompt, api_key, engine="text-davinci-002", temperature=0, max_tokens=256, top_p=1, n=1, patience=100, sleep_time=0):
+def get_gpt3_response(prompt, engine="text-davinci-002", temperature=0, max_tokens=256, top_p=1, n=1, patience=100, sleep_time=0):
     while patience > 0:
         patience -= 1
         try:
-            client = OpenAI(api_key=api_key, base_url=model_to_baseurl[engine])
+            client = OpenAI(api_key=model_dic[engine]["api_key"], base_url=model_dic[engine]["baseurl"])
             response = client.chat.completions.create(engine=engine,
                                                 prompt=prompt,
                                                 temperature=temperature,
@@ -78,11 +83,11 @@ def get_gpt3_response(prompt, api_key, engine="text-davinci-002", temperature=0,
     return ""
 
 
-def get_chat_response(messages, api_key, model="gpt-3.5-turbo", temperature=0, max_tokens=256, n=1, patience=100, sleep_time=0):
+def get_chat_response(messages, model="gpt-3.5-turbo", temperature=0, max_tokens=256, n=1, patience=100, sleep_time=0):
     while patience > 0:
         patience -= 1
         try:
-            client = OpenAI(api_key=api_key, base_url=model_to_baseurl[model])
+            client = OpenAI(api_key=model_dic[model]["api_key"], base_url=model_dic[model]["baseurl"])
             response = client.chat.completions.create(model=model,
                                                 messages=messages,
                                                 temperature=temperature,

@@ -10,15 +10,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utilities import *
 from demos import prompt_policy, prompt_kr, prompt_sg, prompt_qg
 
-# deepseek
-# openai.api_key = os.getenv("DEEPSEEK_API_KEY")
-openai.api_key = os.getenv("OPENAI_API_KEY")
-print(openai.api_key)
 
-# OpenAI
+# bing api_key
 bing_api_key = os.getenv("BING_API_KEY")
-print(bing_api_key)
-
 class solver:
 
     def __init__(self, args):
@@ -30,7 +24,6 @@ class solver:
             self.use_caption = False # disabled by default, could be enabled by the policy
 
         # external arguments
-        self.api_key = openai.api_key
         self.examples, self.pids = self.load_data()
 
     def load_data(self):
@@ -134,7 +127,7 @@ class solver:
         ]
 
         # execute the module
-        modules = get_chat_response(messages, self.api_key, self.policy_engine, self.policy_temperature, self.policy_max_tokens)
+        modules = get_chat_response(messages, self.policy_engine, self.policy_temperature, self.policy_max_tokens)
         modules = self.update_modules(modules)
 
         # update the cache
@@ -231,7 +224,7 @@ class solver:
         ]
 
         # execute the module
-        knowledge = get_chat_response(messages, self.api_key, self.kr_engine, self.kr_temperature, self.kr_max_tokens)
+        knowledge = get_chat_response(messages, self.kr_engine, self.kr_temperature, self.kr_max_tokens)
 
         # update the response cache
         if knowledge != "" and knowledge != None:
@@ -264,7 +257,7 @@ class solver:
         ]
 
         # execute the module
-        query = get_chat_response(messages, self.api_key, self.qg_engine, self.qg_temperature, self.qg_max_tokens)
+        query = get_chat_response(messages, self.qg_engine, self.qg_temperature, self.qg_max_tokens)
         if query == "" or query == None:
             query = None
 
@@ -362,7 +355,7 @@ class solver:
             else:
                 _temperature = self.sg_temperature
 
-            solution = get_chat_response(messages, self.api_key, self.sg_engine, _temperature, self.sg_max_tokens)
+            solution = get_chat_response(messages, self.sg_engine, _temperature, self.sg_max_tokens)
             # print(f"Solution: {solution}")
 
             pattern = re.compile(r"[Tt]he answer is ([A-Z])") # "The answer is XXXXX.",
